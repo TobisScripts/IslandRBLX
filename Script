@@ -3218,29 +3218,36 @@ local Window = Atlas:CreateWindow({
 })
 
 task.spawn(function()
-    local mainFrame = Window.Obj
-    if mainFrame then
-        mainFrame.Size = UDim2.new(0, 400, 0, 280)
-        mainFrame.Position = UDim2.new(0.5, -200, 0.5, -140)
-        mainFrame.Active = true
-        mainFrame.Draggable = true
+    local screenGui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
+    if screenGui then
+        screenGui.IgnoreGuiInset = true
         
-        local UI = mainFrame:FindFirstAncestorOfClass("ScreenGui")
-        if UI then
-            UI.IgnoreGuiInset = true
-        end
+        local scaler = Instance.new("UIScale")
+        scaler.Name = "DeltaFixScale"
+        scaler.Scale = 0.55
+        scaler.Parent = screenGui
 
-        for _, v in pairs(mainFrame:GetDescendants()) do
-            if v:IsA("GuiButton") then
+        -- Delta Touch-Erzwingung
+        local function fixTouch(v)
+            if v:IsA("GuiButton") or v:IsA("TextBox") then
                 v.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.Touch then
+                        -- Simuliert Interaktion für Delta
                         v.Active = true
                     end
                 end)
             end
         end
+
+        screenGui.DescendantAdded:Connect(fixTouch)
+        for _, v in pairs(screenGui:GetDescendants()) do
+            fixTouch(v)
+        end
     end
 end)
+
+Window.Obj.Active = true
+
 
 
 
