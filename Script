@@ -3218,21 +3218,29 @@ local Window = Atlas:CreateWindow({
 })
 
 task.spawn(function()
-    local mainFrame = Window.Obj
-    local screenGui = mainFrame:FindFirstAncestorOfClass("ScreenGui")
+    while not Window.Obj do task.wait() end
+    task.wait(0.5)
     
-    if screenGui then
-        local scaler = Instance.new("UIScale")
-        scaler.Name = "DeltaFix"
-        scaler.Scale = 0.55
-        scaler.Parent = screenGui
+    local gui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
+    if gui then
+        local s = Instance.new("UIScale", gui)
+        s.Scale = 0.55
+        gui.IgnoreGuiInset = true
         
-        screenGui.IgnoreGuiInset = true
+        for _, v in pairs(gui:GetDescendants()) do
+            if v:IsA("GuiButton") then
+                v.InputBegan:Connect(function(io)
+                    if io.UserInputType == Enum.UserInputType.Touch then
+                        v.Active = true
+                    end
+                end)
+            end
+        end
     end
-    
-    mainFrame.Active = true
-    mainFrame.Draggable = true
 end)
+
+Window.Obj.Active = true
+
 
 
 
