@@ -3217,36 +3217,27 @@ local Window = Atlas:CreateWindow({
     Bind = "RightShift";
 })
 
+-- Wir warten kurz, bis Atlas alles gezeichnet hat
+task.wait(1)
+
 task.spawn(function()
-    local screenGui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
-    if screenGui then
-        screenGui.IgnoreGuiInset = true
+    local mainGui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
+    if mainGui then
+        -- Verhindert das "Schwarze Loch" (UI-Glitch)
+        mainGui.Enabled = true
         
-        local scaler = Instance.new("UIScale")
-        scaler.Name = "DeltaFixScale"
-        scaler.Scale = 0.55
-        scaler.Parent = screenGui
-
-        -- Delta Touch-Erzwingung
-        local function fixTouch(v)
-            if v:IsA("GuiButton") or v:IsA("TextBox") then
-                v.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        -- Simuliert Interaktion für Delta
-                        v.Active = true
-                    end
-                end)
-            end
-        end
-
-        screenGui.DescendantAdded:Connect(fixTouch)
-        for _, v in pairs(screenGui:GetDescendants()) do
-            fixTouch(v)
-        end
+        -- Skalierung erst NACH dem Laden hinzufügen
+        local UIScale = mainGui:FindFirstChild("MobileScale") or Instance.new("UIScale")
+        UIScale.Name = "MobileScale"
+        UIScale.Parent = mainGui
+        UIScale.Scale = 0.6
+        
+        -- Delta Touch-Fix
+        mainGui.IgnoreGuiInset = true
+        Window.Obj.Active = true
     end
 end)
 
-Window.Obj.Active = true
 
 
 
