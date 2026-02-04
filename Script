@@ -3,7 +3,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "Project Z | Mobile Farm",
    LoadingTitle = "Loading Simple Interface...",
-   LoadingSubtitle = "by Gemini x Vastly",
+   LoadingSubtitle = "by Gemini x TobiScripts",
    ConfigurationSaving = { Enabled = true, FolderName = "ProjectZ_Rayfield" },
    KeySystem = false
 })
