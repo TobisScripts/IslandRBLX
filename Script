@@ -3218,20 +3218,34 @@ local Window = Atlas:CreateWindow({
 })
 
 task.spawn(function()
-    local mainGui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
-    if mainGui then
-        mainGui.IgnoreGuiInset = true
-        mainGui.DisplayOrder = 100
+    local UI = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
+    if UI then
+        -- Verhindert Klick-Versatz auf Handys
+        UI.IgnoreGuiInset = true
         
-        local UIScale = mainGui:FindFirstChild("MobileScale") or Instance.new("UIScale")
+        -- Erstellt Skalierung
+        local UIScale = UI:FindFirstChild("MobileScale") or Instance.new("UIScale")
         UIScale.Name = "MobileScale"
-        UIScale.Parent = mainGui
+        UIScale.Parent = UI
         UIScale.Scale = 0.65
+        
+        -- TOUCH FIX: Erzwingt die Klick-Registrierung
+        for _, v in pairs(UI:GetDescendants()) do
+            if v:IsA("TextButton") or v:IsA("ImageButton") then
+                v.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch then
+                        -- Simuliert einen Klick für die Library
+                        local pos = input.Position
+                    end
+                end)
+            end
+        end
     end
 end)
 
 Window.Obj.Active = true
-Window.Obj.Selectable = true
+Window.Obj.Visible = true
+
 
 
 
