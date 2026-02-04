@@ -1,0 +1,100 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+-- Variablen & Settings aus deinem Original
+_G.Aura = false
+_G.AutoFarm = false
+_G.AutoPickup = false
+_G.InfiniteJump = false
+
+local Window = OrionLib:MakeWindow({
+    Name = "Project Z | Islands v3 [Mobile Fix]",
+    HidePremium = false, 
+    SaveConfig = true, 
+    ConfigFolder = "ProjectZ_Islands",
+    IntroText = "Project Z - Islands"
+})
+
+-- --- TABS ---
+local MainTab = Window:MakeTab({Name = "Main / Farm", Icon = "rbxassetid://4483345998"})
+local CombatTab = Window:MakeTab({Name = "Combat", Icon = "rbxassetid://4483345998"})
+local TeleportTab = Window:MakeTab({Name = "Teleport", Icon = "rbxassetid://4483345998"})
+local PlayerTab = Window:MakeTab({Name = "Player", Icon = "rbxassetid://4483345998"})
+
+-- --- FARM LOGIK (Aus IslandsV2 DEV) ---
+MainTab:AddToggle({
+    Name = "Auto Pickup Items",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoPickup = Value
+        task.spawn(function()
+            while _G.AutoPickup do
+                task.wait(0.3)
+                for _, item in pairs(workspace.DroppedItems:GetChildren()) do
+                    if item:IsA("Part") or item:IsA("MeshPart") then
+                        item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+                    end
+                end
+            end
+        end)
+    end    
+})
+
+-- --- COMBAT LOGIK (Aus IslandsV2 DEV) ---
+CombatTab:AddToggle({
+    Name = "Kill Aura",
+    Default = false,
+    Callback = function(Value)
+        _G.Aura = Value
+        task.spawn(function()
+            while _G.Aura do
+                task.wait(0.1)
+                pcall(function()
+                    for _, npc in pairs(workspace.Wilderness:GetChildren()) do
+                        if npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                            local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+                            if dist < 25 then
+                                game:GetService("ReplicatedStorage").RemoteEvents.Attack:FireServer(npc)
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+    end    
+})
+
+-- --- TELEPORTS (Basierend auf deiner Library-Logik) ---
+TeleportTab:AddDropdown({
+    Name = "Wähle eine Insel",
+    Default = "None",
+    Options = {"Main Island", "Slime Island", "Desert Island", "Wizard Island"},
+    Callback = function(Value)
+        local locs = {
+            ["Main Island"] = CFrame.new(-10, 50, 20),
+            ["Slime Island"] = CFrame.new(-300, 100, 500),
+            ["Desert Island"] = CFrame.new(1200, 100, -800),
+            ["Wizard Island"] = CFrame.new(-1500, 150, -1000)
+        }
+        if locs[Value] then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = locs[Value]
+        end
+    end    
+})
+
+-- --- PLAYER SETTINGS ---
+PlayerTab:AddSlider({
+    Name = "Walkspeed",
+    Min = 16, Max = 200, Default = 16,
+    Callback = function(Value)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+    end    
+})
+
+PlayerTab:AddToggle({
+    Name = "Infinite Jump",
+    Default = false,
+    Callback = function(Value)
+        _G.InfiniteJump = Value
+        game:GetService("UserInputService").JumpRequest:Connect(function()
+            if _G.InfiniteJump then
+                game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState
