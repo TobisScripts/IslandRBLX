@@ -3218,36 +3218,21 @@ local Window = Atlas:CreateWindow({
 })
 
 task.spawn(function()
-    -- Warten, bis die UI vollständig generiert wurde
-    repeat task.wait() until Window.Obj
-    task.wait(0.5)
-
-    local mainGui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
-    if mainGui then
-        -- Skalierung erzwingen
-        local UIScale = mainGui:FindFirstChild("DeltaScale") or Instance.new("UIScale")
-        UIScale.Name = "DeltaScale"
-        UIScale.Parent = mainGui
-        UIScale.Scale = 0.6
+    local mainFrame = Window.Obj
+    local screenGui = mainFrame:FindFirstAncestorOfClass("ScreenGui")
+    
+    if screenGui then
+        local scaler = Instance.new("UIScale")
+        scaler.Name = "DeltaFix"
+        scaler.Scale = 0.55
+        scaler.Parent = screenGui
         
-        mainGui.IgnoreGuiInset = true
-        
-        -- Touch-Fix: Registriert Berührungen für Delta neu
-        for _, item in pairs(mainGui:GetDescendants()) do
-            if item:IsA("GuiButton") then
-                item.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        -- Simuliert den Klick-Effekt
-                        item.Active = true
-                    end
-                end)
-            end
-        end
+        screenGui.IgnoreGuiInset = true
     end
+    
+    mainFrame.Active = true
+    mainFrame.Draggable = true
 end)
-
-Window.Obj.Active = true
-Window.Obj.Draggable = true
 
 
 
