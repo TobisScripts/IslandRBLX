@@ -3218,13 +3218,16 @@ local Window = Atlas:CreateWindow({
 })
 
 task.spawn(function()
-    while not Window.Obj do task.wait() end
-    task.wait(0.5)
+    task.wait(4)
+    local mainFrame = Window.Obj
+    local gui = mainFrame:FindFirstAncestorOfClass("ScreenGui")
     
-    local gui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
     if gui then
-        local s = Instance.new("UIScale", gui)
-        s.Scale = 0.55
+        local scaler = gui:FindFirstChild("DeltaScale") or Instance.new("UIScale")
+        scaler.Name = "DeltaScale"
+        scaler.Scale = 0.55
+        scaler.Parent = gui
+        
         gui.IgnoreGuiInset = true
         
         for _, v in pairs(gui:GetDescendants()) do
@@ -3240,6 +3243,8 @@ task.spawn(function()
 end)
 
 Window.Obj.Active = true
+Window.Obj.Draggable = true
+
 
 
 
