@@ -1,4 +1,4 @@
--- Minimalist UI for Mobile (Project Z Islands)
+-- Simple UI for Buffalkor Farm
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
@@ -7,9 +7,6 @@ local StatusLabel = Instance.new("TextLabel")
 
 -- GUI Setup
 ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "IslandsFarmUI"
-
-MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.Position = UDim2.new(0.5, -100, 0.4, 0)
@@ -19,67 +16,63 @@ MainFrame.Draggable = true
 
 Title.Parent = MainFrame
 Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "Project Z - Buffalo Farm"
+Title.Text = "Islands: Buffalkor"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
+Title.BackgroundColor3 = Color3.fromRGB(60, 0, 150)
 
 StatusLabel.Parent = MainFrame
 StatusLabel.Position = UDim2.new(0, 0, 0.7, 0)
 StatusLabel.Size = UDim2.new(1, 0, 0, 30)
 StatusLabel.Text = "Status: OFF"
-StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Font = Enum.Font.SourceSans
-StatusLabel.TextSize = 16
 
 ToggleButton.Parent = MainFrame
 ToggleButton.Position = UDim2.new(0.1, 0, 0.3, 0)
 ToggleButton.Size = UDim2.new(0.8, 0, 0, 40)
-ToggleButton.Text = "BUFFALO FARM"
-ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ToggleButton.Text = "AUTO FARM"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.Font = Enum.Font.SourceSansBold
-ToggleButton.TextSize = 14
 
--- LOGIC (From your IslandsV2 script)
+-- SETTINGS
 _G.FarmActive = false
-
-local function attackMob(mob)
-    pcall(function()
-        local remote = game:GetService("ReplicatedStorage").RemoteEvents.Attack
-        remote:FireServer({
-            ["entity"] = mob,
-            ["weapon"] = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-        })
-    end)
-end
+local TARGET_NAME = "Buffalkor"
 
 ToggleButton.MouseButton1Click:Connect(function()
     _G.FarmActive = not _G.FarmActive
     if _G.FarmActive then
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
         StatusLabel.Text = "Status: ACTIVE"
         StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
     else
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
         StatusLabel.Text = "Status: OFF"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
     end
 end)
 
--- Farm Loop (Buffalo)
+-- Main Attack Loop
 task.spawn(function()
     while true do
-        task.wait(0.2)
+        task.wait(0.2) -- Attack speed
         if _G.FarmActive then
             pcall(function()
+                local lp = game.Players.LocalPlayer
+                local char = lp.Character
+                local weapon = char:FindFirstChildOfClass("Tool")
+                
+                -- Check for mobs in the Wilderness folder (common for Islands)
                 for _, mob in pairs(workspace.Wilderness:GetChildren()) do
-                    if mob.Name == "Buffalo" and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-                        local hrp = game.Players.LocalPlayer.Character.HumanoidRootPart
-                        if (hrp.Position - mob.HumanoidRootPart.Position).Magnitude < 30 then
-                            attackMob(mob)
+                    if mob.Name == TARGET_NAME and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        local mobHrp = mob:FindFirstChild("HumanoidRootPart")
+                        
+                        if hrp and mobHrp and (hrp.Position - mobHrp.Position).Magnitude < 40 then
+                            -- The specific Attack Remote from your dev file
+                            game:GetService("ReplicatedStorage").RemoteEvents.Attack:FireServer({
+                                ["entity"] = mob,
+                                ["weapon"] = weapon
+                            })
                         end
                     end
                 end
@@ -88,13 +81,13 @@ task.spawn(function()
     end
 end)
 
--- Auto-Pickup (Always ON for Cores/Drops)
+-- Auto-Pickup Loop
 task.spawn(function()
     while true do
         task.wait(0.5)
         pcall(function()
             for _, item in pairs(workspace.DroppedItems:GetChildren()) do
-                if item:IsA("Part") or item:IsA("MeshPart") then
+                if item:IsA("BasePart") then
                     item.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
                 end
             end
