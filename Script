@@ -1,3 +1,4 @@
+
 -- Islands V3
 if not LPH_OBFUSCATED then
     LPH_JIT_MAX = function(...) return(...) end;
@@ -3209,39 +3210,41 @@ local loadedCode = loadstring(librarySource)
 loadedCode()
 local Atlas = (library or createLibrary)()
 
-local Window = Atlas:CreateWindow({
-    Name = "Islands v3 - Project Z ["..Status.." Version]";
-    Color = Color3.fromRGB(135,135,255);
-    Version = ScriptVersion;
-    ConfigFolder = 'Project_Z_Islands_Settings';
-    Bind = "RightShift";
-})
+local success, Window = pcall(function()
+    return Atlas:CreateWindow({
+        Name = "Islands v3 - Project Z ["..Status.." Version]";
+        Color = Color3.fromRGB(135,135,255);
+        Version = ScriptVersion;
+        ConfigFolder = 'Project_Z_Islands_Settings';
+        Bind = "RightShift";
+    })
+end)
 
-task.spawn(function()
-    task.wait(1.5)
-    local mainFrame = Window.Obj
-    local gui = mainFrame:FindFirstAncestorOfClass("ScreenGui")
-    
-    if gui then
-        gui.IgnoreGuiInset = true
-        mainFrame.Size = UDim2.new(0, 420, 0, 260)
-        mainFrame.Active = true
-        mainFrame.Draggable = true
+if success and Window then
+    task.spawn(function()
+        task.wait(1)
+        local mainFrame = Window.Obj
+        local gui = mainFrame:FindFirstAncestorOfClass("ScreenGui")
         
-        for _, v in pairs(gui:GetDescendants()) do
-            if v:IsA("GuiButton") then
-                v.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch then
-                        pcall(function()
-                            gui.SelectedObject = v
+        if gui then
+            gui.IgnoreGuiInset = true
+            mainFrame.Size = UDim2.new(0, 420, 0, 260)
+            
+            for _, v in pairs(gui:GetDescendants()) do
+                if v:IsA("GuiButton") then
+                    v.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.Touch then
                             v.Active = true
-                        end)
-                    end
-                end)
+                            if v:IsA("TextButton") or v:IsA("ImageButton") then
+                                pcall(function() v.MouseButton1Click:Fire() end)
+                            end
+                        end
+                    end)
+                end
             end
         end
-    end
-end)
+    end)
+end
 
 
 
