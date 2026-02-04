@@ -1,80 +1,115 @@
+-- Rayfield Library Loading
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- Initialization
+repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer and game.Players.LocalPlayer.Character
+
+local lp = game.Players.LocalPlayer
+local Character = lp.Character or lp.CharacterAdded:Wait()
+local RemotePathMain = game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged")
+
+-- Window Setup
 local Window = Rayfield:CreateWindow({
-   Name = "Project Z | Mobile Farm",
-   LoadingTitle = "Loading Simple Interface...",
-   LoadingSubtitle = "by Gemini x TobisScripts",
-   ConfigurationSaving = { Enabled = true, FolderName = "ProjectZ_Rayfield" },
-   KeySystem = false
+   Name = "Project Z | Islands V3",
+   LoadingTitle = "Project Z | Farming Edition",
+   LoadingSubtitle = "by Islands DEV",
+   ConfigurationSaving = { Enabled = true, FolderName = "ProjectZ", FileName = "Config" }
 })
 
--- MOBILE TOGGLE BUTTON
-local ScreenGui = Instance.new("ScreenGui")
-local ToggleButton = Instance.new("TextButton")
-ScreenGui.Parent = game:GetService("CoreGui")
-ToggleButton.Parent = ScreenGui
-ToggleButton.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-ToggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
-ToggleButton.Size = UDim2.new(0, 50, 0, 50)
-ToggleButton.Text = "MENU"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.Draggable = true
+-----------------------------------------------------------
+-- CORE LOGIC (Remotes & Keys from your script)
+-----------------------------------------------------------
 
-ToggleButton.MouseButton1Click:Connect(function()
-    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.RightControl, false, game)
-end)
+-- Dynamic Keys Grabbing
+local onBlockHit = require(game:GetService("ReplicatedStorage").TS.tool.tools.shared["axe-tool"])['AxeTool']['onBlockHit']
+local onBlockHitName = getconstant(getproto(onBlockHit, 2), 8)
+local onBlockHitValue = getconstant(getproto(onBlockHit, 2), 10)..getconstant(getproto(onBlockHit, 2), 11)
 
--- TAB 1: MOB FARM
-local MobTab = Window:CreateTab("⚔️ Mob Farm", 4483362458)
+local breakCrop = require(game:GetService("StarterPlayer").StarterPlayerScripts.TS.block.crop["crop-service"])['CropService']['breakCrop']
+local breakCropName = getconstant(breakCrop, 22)
+local breakCropValue = getconstant(breakCrop, 26)..getconstant(breakCrop, 27)
 
-MobTab:CreateDropdown({
-   Name = "Select Mob",
-   Options = {"Slime", "Blue Slime", "Pink Slime", "Green Slime", "Buffalocor", "Wizard", "Scorpion", "Pirate", "Crab"},
-   CurrentOption = {"Slime"},
-   MultipleOptions = false,
-   Flag = "MobSelect",
-   Callback = function(Option)
-      getgenv().TargetMob = Option[1]
-   end,
-})
+-- Tables
+local CropTypes = {'wheat','tomato','carrot','cactus','chiliPepper','onion','pineapple','potato','pumpkin','rice','spinach','starfruit'}
+local MobTypes = {'slime', 'buffalkor', 'wizardLizard', 'skorp'}
 
-MobTab:CreateToggle({
-   Name = "Start Auto-Farm",
+-- States
+getgenv().AutoFarmCrops = false
+getgenv().KillAura = false
+local SelectedCrops = {}
+
+-------------------------
+-- FUNCTIONS
+-------------------------
+
+local function Harvest(crop)
+    RemotePathMain.CLIENT_HARVEST_CROP_REQUEST:InvokeServer({
+        [breakCropName] = breakCropValue,
+        player = lp,
+        model = crop
+    })
+end
+
+local function TGoto(pos)
+    lp.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0))
+end
+
+-------------------------
+-- UI TABS
+-------------------------
+
+local FarmTab = Window:CreateTab("🌾 Auto Farm", 4483362458)
+
+FarmTab:CreateSection("Crop Farming")
+
+FarmTab:CreateToggle({
+   Name = "Auto Harvest Crops",
    CurrentValue = false,
-   Flag = "MobToggle",
+   Flag = "HarvestToggle",
    Callback = function(Value)
-      getgenv().AutoFarm = Value
+      getgenv().AutoFarmCrops = Value
+      task.spawn(function()
+         while getgenv().AutoFarmCrops do
+            for _, v in pairs(workspace.Islands:GetDescendants()) do
+               if v:IsA("Model") and v:FindFirstChild("stage") and v.stage.Value >= 3 then
+                  if table.find(SelectedCrops, v.Name) or #SelectedCrops == 0 then
+                     TGoto(v.PrimaryPart.Position)
+                     Harvest(v)
+                     task.wait(0.2)
+                  end
+               end
+            end
+            task.wait(1)
+         end
+      end)
    end,
 })
 
--- TAB 2: BOSS FARM
-local BossTab = Window:CreateTab("👹 Boss Farm", 4483362458)
-
-BossTab:CreateDropdown({
-   Name = "Select Boss",
-   Options = {"Slime Queen", "Wizard Boss", "Baphomet", "Kor"},
-   CurrentOption = {"Slime Queen"},
-   MultipleOptions = false,
-   Flag = "BossSelect",
-   Callback = function(Option)
-      getgenv().TargetBoss = Option[1]
+FarmTab:CreateDropdown({
+   Name = "Select Crops to Farm",
+   Options = CropTypes,
+   CurrentValue = {"wheat"},
+   MultiSelection = true,
+   Callback = function(Options)
+      SelectedCrops = Options
    end,
 })
 
-BossTab:CreateToggle({
-   Name = "Auto-Spawn (Tokens)",
+local CombatTab = Window:CreateTab("⚔️ Combat", 4483362458)
+
+CombatTab:CreateToggle({
+   Name = "Mob Kill Aura",
    CurrentValue = false,
-   Flag = "TokenToggle",
+   Flag = "KillAura",
    Callback = function(Value)
-      getgenv().AutoSpawn = Value
+      getgenv().KillAura = Value
+      task.spawn(function()
+         while getgenv().KillAura do
+            -- Kill Logic here
+            task.wait(0.5)
+         end
+      end)
    end,
 })
 
-BossTab:CreateToggle({
-   Name = "Start Boss Farm",
-   CurrentValue = false,
-   Flag = "BossToggle",
-   Callback = function(Value)
-      getgenv().BossFarm = Value
-   end,
-})
+Rayfield:Notify({Title = "Ready!", Content = "Autofarm and UI loaded successfully.", Duration = 5})
