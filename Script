@@ -3220,16 +3220,13 @@ local Window = Atlas:CreateWindow({
 task.spawn(function()
     local mainGui = Window.Obj:FindFirstAncestorOfClass("ScreenGui")
     if mainGui then
-        if mainGui:FindFirstChild("MobileScale") then
-            mainGui.MobileScale:Destroy()
-        end
+        mainGui.IgnoreGuiInset = true
+        mainGui.DisplayOrder = 100
         
-        local UIScale = Instance.new("UIScale")
+        local UIScale = mainGui:FindFirstChild("MobileScale") or Instance.new("UIScale")
         UIScale.Name = "MobileScale"
         UIScale.Parent = mainGui
         UIScale.Scale = 0.65
-        
-        mainGui.IgnoreGuiInset = true 
     end
 end)
 
