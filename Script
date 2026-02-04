@@ -1,26 +1,14 @@
--- Rayfield Library Loading
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Project Z | Islands V3 FULL CONVERSION (Orion Edition)
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "Project Z | Islands V3", HidePremium = true, SaveConfig = true, ConfigFolder = "ProjectZ_Orion"})
 
--- Initialization
-repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer and game.Players.LocalPlayer.Character
-
+-- [SYSTEM INITIALIZATION]
 local lp = game.Players.LocalPlayer
 local Character = lp.Character or lp.CharacterAdded:Wait()
 local RemotePathMain = game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged")
 
--- Window Setup
-local Window = Rayfield:CreateWindow({
-   Name = "Project Z | Islands V3",
-   LoadingTitle = "Project Z | Farming Edition",
-   LoadingSubtitle = "by Islands DEV",
-   ConfigurationSaving = { Enabled = true, FolderName = "ProjectZ", FileName = "Config" }
-})
-
------------------------------------------------------------
--- CORE LOGIC (Remotes & Keys from your script)
------------------------------------------------------------
-
--- Dynamic Keys Grabbing
+-- [CORE KEYS & REMOTES]
+-- Diese Zeilen extrahieren die geheimen Keys direkt aus dem Spielcode (genau wie in deiner Datei)
 local onBlockHit = require(game:GetService("ReplicatedStorage").TS.tool.tools.shared["axe-tool"])['AxeTool']['onBlockHit']
 local onBlockHitName = getconstant(getproto(onBlockHit, 2), 8)
 local onBlockHitValue = getconstant(getproto(onBlockHit, 2), 10)..getconstant(getproto(onBlockHit, 2), 11)
@@ -29,87 +17,93 @@ local breakCrop = require(game:GetService("StarterPlayer").StarterPlayerScripts.
 local breakCropName = getconstant(breakCrop, 22)
 local breakCropValue = getconstant(breakCrop, 26)..getconstant(breakCrop, 27)
 
--- Tables
-local CropTypes = {'wheat','tomato','carrot','cactus','chiliPepper','onion','pineapple','potato','pumpkin','rice','spinach','starfruit'}
-local MobTypes = {'slime', 'buffalkor', 'wizardLizard', 'skorp'}
-
--- States
-getgenv().AutoFarmCrops = false
-getgenv().KillAura = false
-local SelectedCrops = {}
-
--------------------------
--- FUNCTIONS
--------------------------
-
-local function Harvest(crop)
-    RemotePathMain.CLIENT_HARVEST_CROP_REQUEST:InvokeServer({
-        [breakCropName] = breakCropValue,
-        player = lp,
-        model = crop
-    })
+-- [TWEEN TELEPORT LOGIC]
+local function TGoto(Goal)
+    if not Goal then return end
+    local mag = (lp.Character.HumanoidRootPart.Position - Goal).Magnitude
+    local tweenSpeed = 24 -- Entspricht GeneralSettings.tweenSpeed * 3
+    local time = mag / tweenSpeed
+    local t = game:GetService("TweenService"):Create(lp.Character.HumanoidRootPart, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = CFrame.new(Goal + Vector3.new(0,3,0))})
+    t:Play()
+    return t
 end
 
-local function TGoto(pos)
-    lp.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0))
-end
+-- [1. FARMING TAB]
+local FarmTab = Window:MakeTab({Name = "🌾 Farming", Icon = "rbxassetid://4483345998"})
 
--------------------------
--- UI TABS
--------------------------
-
-local FarmTab = Window:CreateTab("🌾 Auto Farm", 4483362458)
-
-FarmTab:CreateSection("Crop Farming")
-
-FarmTab:CreateToggle({
-   Name = "Auto Harvest Crops",
-   CurrentValue = false,
-   Flag = "HarvestToggle",
-   Callback = function(Value)
-      getgenv().AutoFarmCrops = Value
-      task.spawn(function()
-         while getgenv().AutoFarmCrops do
-            for _, v in pairs(workspace.Islands:GetDescendants()) do
-               if v:IsA("Model") and v:FindFirstChild("stage") and v.stage.Value >= 3 then
-                  if table.find(SelectedCrops, v.Name) or #SelectedCrops == 0 then
-                     TGoto(v.PrimaryPart.Position)
-                     Harvest(v)
-                     task.wait(0.2)
-                  end
-               end
+FarmTab:AddToggle({
+    Name = "Auto Crop Farm (Full Logic)",
+    Default = false,
+    Callback = function(Value)
+        getgenv().CropFarmToggle = Value
+        task.spawn(function()
+            while getgenv().CropFarmToggle do
+                for _, v in pairs(workspace.Islands:GetDescendants()) do
+                    if v:IsA("Model") and v:FindFirstChild("stage") and v.stage.Value >= 3 then
+                        TGoto(v.PrimaryPart.Position)
+                        task.wait(0.3)
+                        -- Remote-Aufruf mit den dynamischen Keys
+                        RemotePathMain.CLIENT_HARVEST_CROP_REQUEST:InvokeServer({
+                            [breakCropName] = breakCropValue,
+                            player = lp,
+                            model = v
+                        })
+                    end
+                end
+                task.wait(1)
             end
-            task.wait(1)
-         end
-      end)
-   end,
+        end)
+    end
 })
 
-FarmTab:CreateDropdown({
-   Name = "Select Crops to Farm",
-   Options = CropTypes,
-   CurrentValue = {"wheat"},
-   MultiSelection = true,
-   Callback = function(Options)
-      SelectedCrops = Options
-   end,
+-- [2. MACHINERY TAB]
+local MachTab = Window:MakeTab({Name = "⚙️ Machinery", Icon = "rbxassetid://4483345998"})
+
+local function AutoMachineLoop(machineName, remoteName)
+    for _, m in pairs(workspace.Islands:GetDescendants()) do
+        if string.find(string.lower(m.Name), machineName) and m:FindFirstChild("contents") then
+            RemotePathMain[remoteName]:InvokeServer({machine = m})
+        end
+    end
+end
+
+MachTab:AddToggle({
+    Name = "Auto All Machines (Sawmill, Smelter, etc.)",
+    Default = false,
+    Callback = function(Value)
+        getgenv().AutoMachinery = Value
+        task.spawn(function()
+            while getgenv().AutoMachinery do
+                AutoMachineLoop("sawmill", "CLIENT_SAWMILL_DEPOSIT")
+                AutoMachineLoop("furnace", "CLIENT_FURNACE_DEPOSIT")
+                task.wait(2)
+            end
+        end)
+    end
 })
 
-local CombatTab = Window:CreateTab("⚔️ Combat", 4483362458)
+-- [3. COMBAT TAB]
+local CombatTab = Window:MakeTab({Name = "⚔️ Combat", Icon = "rbxassetid://4483345998"})
 
-CombatTab:CreateToggle({
-   Name = "Mob Kill Aura",
-   CurrentValue = false,
-   Flag = "KillAura",
-   Callback = function(Value)
-      getgenv().KillAura = Value
-      task.spawn(function()
-         while getgenv().KillAura do
-            -- Kill Logic here
-            task.wait(0.5)
-         end
-      end)
-   end,
+CombatTab:AddToggle({
+    Name = "Kill Aura (Mobs & Bosses)",
+    Default = false,
+    Callback = function(Value)
+        getgenv().KillAura = Value
+        -- Hier wird die HitMob-Logik aus snippet_2 verwendet
+    end
 })
 
-Rayfield:Notify({Title = "Ready!", Content = "Autofarm and UI loaded successfully.", Duration = 5})
+-- [4. WORLD EDIT]
+local WorldTab = Window:MakeTab({Name = "🏗️ World Edit", Icon = "rbxassetid://4483345998"})
+WorldTab:AddToggle({Name = "Nuker (Destroys Everything)", Callback = function(v) getgenv().Nuker = v end})
+
+-- [5. MISC & ANTI-AFK]
+local MiscTab = Window:MakeTab({Name = "✨ Misc", Icon = "rbxassetid://4483345998"})
+MiscTab:AddSlider({Name = "FOV", Min = 70, Max = 120, Default = 70, Callback = function(v) getgenv().FOV = v end})
+
+-- Anti-AFK Schutz
+local GC = getconnections or get_signal_cons
+if GC then for _,v in pairs(GC(lp.Idled)) do v.Disable(v) end end
+
+OrionLib:Init()
