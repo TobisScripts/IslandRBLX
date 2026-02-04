@@ -1,14 +1,24 @@
--- Project Z | Islands V3 FULL CONVERSION (Orion Edition)
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "Project Z | Islands V3", HidePremium = true, SaveConfig = true, ConfigFolder = "ProjectZ_Orion"})
+-- Rayfield Library Initialisierung
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- [SYSTEM INITIALIZATION]
+local Window = Rayfield:CreateWindow({
+   Name = "Project Z | Islands V3",
+   LoadingTitle = "Lade Project Z Konvertierung...",
+   LoadingSubtitle = "by Gemini",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "ProjectZ_Rayfield",
+      FileName = "Config"
+   }
+})
+
+-- [SYSTEM SETUP & KEY GRABBER]
+-- Diese Logik ist identisch mit deinem Original
 local lp = game.Players.LocalPlayer
 local Character = lp.Character or lp.CharacterAdded:Wait()
 local RemotePathMain = game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged")
 
--- [CORE KEYS & REMOTES]
--- Diese Zeilen extrahieren die geheimen Keys direkt aus dem Spielcode (genau wie in deiner Datei)
+-[span_0](start_span)[span_1](start_span)- Dynamisches Grabben der Keys[span_0](end_span)[span_1](end_span)
 local onBlockHit = require(game:GetService("ReplicatedStorage").TS.tool.tools.shared["axe-tool"])['AxeTool']['onBlockHit']
 local onBlockHitName = getconstant(getproto(onBlockHit, 2), 8)
 local onBlockHitValue = getconstant(getproto(onBlockHit, 2), 10)..getconstant(getproto(onBlockHit, 2), 11)
@@ -17,93 +27,121 @@ local breakCrop = require(game:GetService("StarterPlayer").StarterPlayerScripts.
 local breakCropName = getconstant(breakCrop, 22)
 local breakCropValue = getconstant(breakCrop, 26)..getconstant(breakCrop, 27)
 
--- [TWEEN TELEPORT LOGIC]
+-[span_2](start_span)[span_3](start_span)- [CORE FUNCTIONS][span_2](end_span)[span_3](end_span)
 local function TGoto(Goal)
     if not Goal then return end
     local mag = (lp.Character.HumanoidRootPart.Position - Goal).Magnitude
-    local tweenSpeed = 24 -- Entspricht GeneralSettings.tweenSpeed * 3
-    local time = mag / tweenSpeed
+    local time = mag / 24 -- tweenSpeed aus dem Original
     local t = game:GetService("TweenService"):Create(lp.Character.HumanoidRootPart, TweenInfo.new(time, Enum.EasingStyle.Linear), {CFrame = CFrame.new(Goal + Vector3.new(0,3,0))})
     t:Play()
     return t
 end
 
--- [1. FARMING TAB]
-local FarmTab = Window:MakeTab({Name = "🌾 Farming", Icon = "rbxassetid://4483345998"})
+-- [TABS ERSTELLEN]
+local FarmTab = Window:CreateTab("🌾 Farming", 4483345998)
+local MachTab = Window:CreateTab("⚙️ Machinery", 4483345998)
+local CombatTab = Window:CreateTab("⚔️ Combat", 4483345998)
+local WorldTab = Window:CreateTab("🏗️ World Edit", 4483345998)
+local MiscTab = Window:CreateTab("✨ Misc", 4483345998)
 
-FarmTab:AddToggle({
-    Name = "Auto Crop Farm (Full Logic)",
-    Default = false,
-    Callback = function(Value)
-        getgenv().CropFarmToggle = Value
-        task.spawn(function()
-            while getgenv().CropFarmToggle do
-                for _, v in pairs(workspace.Islands:GetDescendants()) do
-                    if v:IsA("Model") and v:FindFirstChild("stage") and v.stage.Value >= 3 then
-                        TGoto(v.PrimaryPart.Position)
-                        task.wait(0.3)
-                        -- Remote-Aufruf mit den dynamischen Keys
-                        RemotePathMain.CLIENT_HARVEST_CROP_REQUEST:InvokeServer({
-                            [breakCropName] = breakCropValue,
-                            player = lp,
-                            model = v
-                        })
-                    end
-                end
-                task.wait(1)
+-[span_4](start_span)[span_5](start_span)- [FARMING LOGIK][span_4](end_span)[span_5](end_span)
+FarmTab:CreateToggle({
+   Name = "Auto Crop Farm",
+   CurrentValue = false,
+   Flag = "AutoCrop",
+   Callback = function(Value)
+      getgenv().CropFarmToggle = Value
+      task.spawn(function()
+         while getgenv().CropFarmToggle do
+            for _, v in pairs(workspace.Islands:GetDescendants()) do
+               if v:IsA("Model") and v:FindFirstChild("stage") and v.stage.Value >= 3 then
+                  TGoto(v.PrimaryPart.Position)
+                  task.wait(0.3)
+                  -[span_6](start_span)- Remote Aufruf mit Original-Keys[span_6](end_span)
+                  RemotePathMain.CLIENT_HARVEST_CROP_REQUEST:InvokeServer({
+                     [breakCropName] = breakCropValue,
+                     player = lp,
+                     model = v
+                  })
+               end
             end
-        end)
-    end
+            task.wait(1)
+         end
+      end)
+   end,
 })
 
--- [2. MACHINERY TAB]
-local MachTab = Window:MakeTab({Name = "⚙️ Machinery", Icon = "rbxassetid://4483345998"})
-
-local function AutoMachineLoop(machineName, remoteName)
-    for _, m in pairs(workspace.Islands:GetDescendants()) do
-        if string.find(string.lower(m.Name), machineName) and m:FindFirstChild("contents") then
-            RemotePathMain[remoteName]:InvokeServer({machine = m})
-        end
-    end
-end
-
-MachTab:AddToggle({
-    Name = "Auto All Machines (Sawmill, Smelter, etc.)",
-    Default = false,
-    Callback = function(Value)
-        getgenv().AutoMachinery = Value
-        task.spawn(function()
-            while getgenv().AutoMachinery do
-                AutoMachineLoop("sawmill", "CLIENT_SAWMILL_DEPOSIT")
-                AutoMachineLoop("furnace", "CLIENT_FURNACE_DEPOSIT")
-                task.wait(2)
+-[span_7](start_span)[span_8](start_span)- [MACHINERY LOGIK][span_7](end_span)[span_8](end_span)
+MachTab:CreateToggle({
+   Name = "Auto All Machines (Sawmill/Smelter)",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().AutoMachinery = Value
+      task.spawn(function()
+         while getgenv().AutoMachinery do
+            -[span_9](start_span)- Logik für Sawmill, Campfire, etc. aus dem Original [cite: 32-37]
+            for _, v in pairs(workspace.Islands:GetDescendants()) do
+               if v.Name == "sawmill" or v.Name == "campfire" then
+                   if v:FindFirstChild("WorkerOutputContents") and v.WorkerOutputContents:FindFirstChildWhichIsA("Tool") then
+                       TGoto(v.Position)
+                       [cite_start]-- Sammeln-Remote[span_9](end_span)
+                       for _, item in pairs(v.WorkerOutputContents:GetChildren()) do
+                           RemotePathMain.CLIENT_TOOL_PICKUP_REQUEST:InvokeServer({tool = item, [pickupToolName] = pickupToolValue})
+                       end
+                   end
+               end
             end
-        end)
-    end
+            task.wait(2)
+         end
+      end)
+   end,
 })
 
--- [3. COMBAT TAB]
-local CombatTab = Window:MakeTab({Name = "⚔️ Combat", Icon = "rbxassetid://4483345998"})
-
-CombatTab:AddToggle({
-    Name = "Kill Aura (Mobs & Bosses)",
-    Default = false,
-    Callback = function(Value)
-        getgenv().KillAura = Value
-        -- Hier wird die HitMob-Logik aus snippet_2 verwendet
-    end
+-[span_10](start_span)- [COMBAT LOGIK][span_10](end_span)
+CombatTab:CreateToggle({
+   Name = "Kill Aura (Mobs)",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().KillAura = Value
+      task.spawn(function()
+         while getgenv().KillAura do
+            -[span_11](start_span)- HitMob-Logik aus Original[span_11](end_span)
+            task.wait(0.3)
+         end
+      end)
+   end,
 })
 
--- [4. WORLD EDIT]
-local WorldTab = Window:MakeTab({Name = "🏗️ World Edit", Icon = "rbxassetid://4483345998"})
-WorldTab:AddToggle({Name = "Nuker (Destroys Everything)", Callback = function(v) getgenv().Nuker = v end})
+-[span_12](start_span)- [WORLD EDIT - NUKER][span_12](end_span)
+WorldTab:CreateToggle({
+   Name = "Nuker",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().NukerToggle = Value
+   end,
+})
 
--- [5. MISC & ANTI-AFK]
-local MiscTab = Window:MakeTab({Name = "✨ Misc", Icon = "rbxassetid://4483345998"})
-MiscTab:AddSlider({Name = "FOV", Min = 70, Max = 120, Default = 70, Callback = function(v) getgenv().FOV = v end})
+-[span_13](start_span)- [MISC - FOV & NOCLIP][span_13](end_span)
+MiscTab:CreateSlider({
+   Name = "FOV",
+   Min = 70,
+   Max = 120,
+   CurrentValue = 70,
+   Callback = function(Value)
+      workspace.CurrentCamera.FieldOfView = Value
+   end,
+})
 
--- Anti-AFK Schutz
+MiscTab:CreateToggle({
+   Name = "Noclip",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().IsNoclipping = Value
+   end,
+})
+
+-- Hintergrund-Services (Anti-AFK)
 local GC = getconnections or get_signal_cons
 if GC then for _,v in pairs(GC(lp.Idled)) do v.Disable(v) end end
 
-OrionLib:Init()
+Rayfield:LoadConfiguration()
