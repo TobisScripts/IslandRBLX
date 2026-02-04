@@ -3222,23 +3222,35 @@ end)
 
 if success and Window then
     task.spawn(function()
-        task.wait(1)
+        task.wait(2)
         local mainFrame = Window.Obj
         local gui = mainFrame:FindFirstAncestorOfClass("ScreenGui")
         
         if gui then
+            -- Fenster verkleinern
+            mainFrame.Size = UDim2.new(0, 420, 0, 280)
             gui.IgnoreGuiInset = true
-            mainFrame.Size = UDim2.new(0, 420, 0, 260)
             
-            for _, v in pairs(gui:GetDescendants()) do
+            -- Brute-Force Touch Fix
+            for _, v in pairs(mainFrame:GetDescendants()) do
                 if v:IsA("GuiButton") then
-                    v.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.Touch then
+                    -- Erstellt einen unsichtbaren Touch-Layer
+                    local touchLayer = Instance.new("TextButton")
+                    touchLayer.Size = UDim2.new(1, 0, 1, 0)
+                    touchLayer.BackgroundTransparency = 1
+                    touchLayer.Text = ""
+                    touchLayer.Name = "TouchFix"
+                    touchLayer.Parent = v
+                    touchLayer.ZIndex = v.ZIndex + 10
+                    
+                    touchLayer.MouseButton1Down:Connect(function()
+                        -- Erzwingt den Klick auf dem originalen Button
+                        pcall(function()
                             v.Active = true
-                            if v:IsA("TextButton") or v:IsA("ImageButton") then
-                                pcall(function() v.MouseButton1Click:Fire() end)
-                            end
-                        end
+                            gui.SelectedObject = v
+                            firesignal(v.MouseButton1Click)
+                            firesignal(v.MouseButton1Down)
+                        end)
                     end)
                 end
             end
