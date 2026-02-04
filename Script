@@ -3209,7 +3209,7 @@ local loadedCode = loadstring(librarySource)
 loadedCode()
 local Atlas = (library or createLibrary)()
 
-local Window = Atlas:CreateWindow({Name = "Islands v3 - Project Z ["..Status.." Version]";Color = Color3.fromRGB(135,135,255);Version = ScriptVersion;ConfigFolder = 'Project_Z_Islands_Settings';Bind = "RightShift";})
+local Window = Atlas:CreateWindow({Name = "Islands v3 - Project Z ["..Status.." Version]"; Color = Color3.fromRGB(135,135,255); Version = ScriptVersion; ConfigFolder = 'Project_Z_Islands_Settings'; Bind = "RightShift"; Size = UDim2.new(0, 380, 0, 240);})
 
 
 
