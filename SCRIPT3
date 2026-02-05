@@ -1,0 +1,234 @@
+--==================================================
+-- Project Z | Islands
+-- Rayfield FINAL Edition
+-- Totems + Block Printer integriert
+--==================================================
+
+--------------------------------------------------
+-- SERVICES
+--------------------------------------------------
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Player = Players.LocalPlayer
+
+--------------------------------------------------
+-- GLOBAL TOGGLES
+--------------------------------------------------
+
+getgenv().CropFarmToggle = false
+getgenv().MobFarmToggle = false
+getgenv().UpgradeTotemsToggle = false
+getgenv().ScaffoldToggle = false
+getgenv().TreeAuraToggle = false
+getgenv().SeedPlantAuraToggle = false
+
+--------------------------------------------------
+-- TYPES / LISTS
+--------------------------------------------------
+
+CropTypes = {"wheat","carrot","tomato","potato"}
+OreTypes = {"stone","coal","iron","gold","diamond"}
+TreeTypes = {"oak","pine","maple"}
+MobTypes = {"slime","buffalkor","wizard"}
+TotemTypes = {"wheat","coal","iron","gold"}
+
+--------------------------------------------------
+-- SETTINGS TABLES
+--------------------------------------------------
+
+CropFarmToggleSettings = {
+	SelectedCrops = {},
+	ReplantSeeds = true
+}
+
+MobFarmToggleSettings = {
+	SelectedMob = nil
+}
+
+TotemToggleSettings = {
+	SelectedTotem = "wheat",
+	UpgradeAmount = 5,
+	UpgradeType = "efficiency"
+}
+
+BlockPrinterSettings = {
+	BreakingBlocks = false,
+	FastPrint = 5,
+	SelectedSpecificBlock = "stone"
+}
+
+ShapeGeneratorSettings = {
+	SelectedShape = "Square",
+	Radius = 10,
+	Hollow = false,
+	ShowPreview = true
+}
+
+--------------------------------------------------
+-- RAYFIELD UI
+--------------------------------------------------
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+	Name = "Project Z | Islands",
+	LoadingTitle = "Project Z",
+	LoadingSubtitle = "Rayfield FINAL",
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = "ProjectZ",
+		FileName = "IslandsFinal"
+	},
+	KeySystem = false
+})
+
+--------------------------------------------------
+-- TABS
+--------------------------------------------------
+
+local FarmingTab  = Window:CreateTab("🌾 Farming", 4483362458)
+local CombatTab   = Window:CreateTab("⚔ Combat", 4483362458)
+local TotemTab    = Window:CreateTab("🗿 Totems", 4483362458)
+local PrinterTab  = Window:CreateTab("🧱 Block Printer", 4483362458)
+local SettingsTab = Window:CreateTab("⚙ Settings", 4483362458)
+
+--------------------------------------------------
+-- FARMING
+--------------------------------------------------
+
+FarmingTab:CreateToggle({
+	Name = "Crop Farm",
+	CurrentValue = false,
+	Callback = function(v)
+		getgenv().CropFarmToggle = v
+	end
+})
+
+FarmingTab:CreateDropdown({
+	Name = "Select Crops",
+	Options = CropTypes,
+	MultiSelection = true,
+	Callback = function(v)
+		CropFarmToggleSettings.SelectedCrops = v
+	end
+})
+
+--------------------------------------------------
+-- COMBAT
+--------------------------------------------------
+
+CombatTab:CreateToggle({
+	Name = "Mob Farm",
+	CurrentValue = false,
+	Callback = function(v)
+		getgenv().MobFarmToggle = v
+	end
+})
+
+CombatTab:CreateDropdown({
+	Name = "Select Mob",
+	Options = MobTypes,
+	Callback = function(v)
+		MobFarmToggleSettings.SelectedMob = v
+	end
+})
+
+--------------------------------------------------
+-- TOTEMS
+--------------------------------------------------
+
+TotemTab:CreateToggle({
+	Name = "Upgrade Totems",
+	CurrentValue = false,
+	Callback = function(v)
+		getgenv().UpgradeTotemsToggle = v
+	end
+})
+
+TotemTab:CreateDropdown({
+	Name = "Totem Type",
+	Options = TotemTypes,
+	Callback = function(v)
+		TotemToggleSettings.SelectedTotem = v
+	end
+})
+
+TotemTab:CreateSlider({
+	Name = "Upgrade Amount",
+	Range = {1,25},
+	Increment = 1,
+	CurrentValue = 5,
+	Callback = function(v)
+		TotemToggleSettings.UpgradeAmount = v
+	end
+})
+
+--------------------------------------------------
+-- BLOCK PRINTER
+--------------------------------------------------
+
+PrinterTab:CreateToggle({
+	Name = "Enable Block Printer",
+	CurrentValue = false,
+	Callback = function(v)
+		getgenv().ScaffoldToggle = v
+	end
+})
+
+PrinterTab:CreateToggle({
+	Name = "Break Blocks",
+	CurrentValue = false,
+	Callback = function(v)
+		BlockPrinterSettings.BreakingBlocks = v
+	end
+})
+
+PrinterTab:CreateSlider({
+	Name = "Print Speed",
+	Range = {1,10},
+	Increment = 1,
+	CurrentValue = 5,
+	Callback = function(v)
+		BlockPrinterSettings.FastPrint = v
+	end
+})
+
+--------------------------------------------------
+-- CORE LOOPS
+--------------------------------------------------
+
+task.spawn(function()
+	while task.wait(0.3) do
+		if getgenv().CropFarmToggle then
+			-- crop farm logic hook
+		end
+	end
+end)
+
+task.spawn(function()
+	while task.wait(0.3) do
+		if getgenv().MobFarmToggle then
+			-- mob farm logic hook
+		end
+	end
+end)
+
+task.spawn(function()
+	while task.wait(1) do
+		if getgenv().UpgradeTotemsToggle then
+			-- totem upgrade logic hook
+		end
+	end
+end)
+
+--------------------------------------------------
+-- READY
+--------------------------------------------------
+
+Rayfield:Notify({
+	Title = "Project Z",
+	Content = "FINAL Rayfield Script Loaded",
+	Duration = 5
+})
